@@ -14,7 +14,7 @@ let moon = {
         smooth_sync: true,
         smooth_factor: 10,
         jump_large_diffs: true,
-        logerrors: true,
+        log_api_errors: true,
         fetchinterval: 5000,
     },
 
@@ -29,12 +29,18 @@ let moon = {
             moon._apiUpdate = performance.now()
             moon.apiConnected = true
 
+            let event = new CustomEvent('moontime:api_status_changed', { detail: moon.apiConnected })
+            window.dispatchEvent(event)
+
             window.setTimeout(moon._fetchAPI, 5000)
         }).catch(err => {
-            if (moon.settings.logerrors) {
+            if (moon.settings.log_api_errors) {
                 console.error(err)
             }
             moon.apiConnected = false
+
+            let event = new CustomEvent('moontime:api_status_changed', { detail: moon.apiConnected })
+            window.dispatchEvent(event)
 
             window.setTimeout(moon._fetchAPI, 5000)
         })
