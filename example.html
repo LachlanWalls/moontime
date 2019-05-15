@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Moon Library Example</title>
+    <script src="https://cdn.jsdelivr.net/gh/LachlanWalls/moontime@master/moontime.js"></script>
+</head>
+
+<body>
+    <p class="clock"></p>
+    <p class="offset"></p>
+
+    <script>
+        window.addEventListener("moontime:updated", function(e) {
+            document.querySelector(".clock").innerHTML = moon.formatMoonString("Time: %MS:%MM:%M %MdT %MeMT, %MAT, %MC")
+        })
+
+        window.addEventListener("moontime:offset_updated", function(e) {
+            document.querySelector(".offset").innerHTML = "Offset: " + e.detail
+        })
+    </script>
+</body>
+
+</html>
