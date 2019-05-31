@@ -46,7 +46,7 @@ let moon = {
         })
     },
 
-    solarToMoon: (s) => (s.getTime() - 413596800000) / 4.97875,
+    solarToMoon: (s) => (s - 413596800000) / 4.97875,
     moonToSolar: (m) => m * 4.97875 + 413596800000,
 
     currentExactTime: () => moon._getAPITime(),
