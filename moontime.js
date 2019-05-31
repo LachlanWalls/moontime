@@ -177,7 +177,7 @@ let moon = {
                     moon._smoothOffsetUpdate = window.setInterval(() => {
                         moon._smoothOffset = moon._getAPITime() - moon._getSmoothTime()
 
-                        if (!isNaN(moon._smoothOffset)) {
+                        if (!isNaN(moon._smoothOffset) && moon.apiConnected) {
                             let event = new CustomEvent('moontime:offset_updated', { detail: moon._smoothOffset })
                             window.dispatchEvent(event)
                         }
