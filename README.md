@@ -1,7 +1,7 @@
 # moontime
 
 
-Moon Time is a timekeeping system based on the lunar cycle. You can read more about moon time itself [here](http://moon.dynodel.com).
+Moon Time is a timekeeping system based on the lunar cycle. A Chrome extension with more information can be found [here](https://chrome.google.com/webstore/detail/moon/pkmifcpdpojpgejapnpedemfpfddflee).
 
 **This JavaScript library acts as an interface with moon time.** It allows anyone to implement moon time into their project, and has multiple features.
 
@@ -11,13 +11,12 @@ Moon Time is a timekeeping system based on the lunar cycle. You can read more ab
 - Moon & Solar time cross converting.
 - Moon time & string formatting.
 
-
 ## Implementation
 
 To implement moon time onto your website, simply add the following script in your head:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/LachlanWalls/moontime@master/moontime.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/eeehh/moontime@master/moontime.js"></script>
 ```
 
 This will include moontime, which will automatically start up and start dispatching events whenever your clock should be updated.
@@ -27,7 +26,7 @@ This will include moontime, which will automatically start up and start dispatch
 If you don't want moontime to start automatically, you can start it manually. Add a 'delay_start' attribute to the script tag.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/LachlanWalls/moontime@master/moontime.js" delay_start></script>
+<script src="https://cdn.jsdelivr.net/gh/eeehh/moontime@master/moontime.js" delay_start></script>
 ```
 
 Moontime will now start once you execute the following script:
