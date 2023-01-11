@@ -3,33 +3,27 @@
 
 Moon Time is a timekeeping system based on the lunar cycle. A Chrome extension with more information can be found [here](https://chrome.google.com/webstore/detail/moon/pkmifcpdpojpgejapnpedemfpfddflee).
 
-**This JavaScript library acts as an interface with moon time.** It allows anyone to implement moon time into their project, and has multiple features.
+This TS/JS library is an interface with moon time. It allows anyone to implement moon time into their project.
 
-### Features
+**Features:**
 
-- Smooth time syncing with the Moon API.
-- Moon & Solar time cross converting.
-- Moon time & string formatting.
+- Smooth time syncing with the Moon API
+- Cross converting between moon & solar time
+- Moon time string formatting
 
-## Implementation
+## Installation
 
-To implement moon time onto your website, simply add the following script in your head:
+Add moon time to your website by including the `build/moontime.js` file. Either add it to your project directly or include via a site like jsdelivr.
 
-```html
-<script src="https://cdn.jsdelivr.net/gh/eeehh/moontime@master/moontime.js"></script>
-```
-
-This will include moontime, which will automatically start up and start dispatching events whenever your clock should be updated.
-
-**All functions and variables are accessed through the object named `moon`.**
+As soon as the script is loaded, it will automatically start tracking moon time and dispatching timekeeping events via `window`.
 
 If you don't want moontime to start automatically, you can start it manually. Add a 'delay_start' attribute to the script tag.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/eeehh/moontime@master/moontime.js" delay_start></script>
+<script src='./moontime.js' delay_start></script>
 ```
 
-Moontime will now start once you execute the following script:
+Moontime will now only start once you execute the following script:
 
 ```js
 moon.init()
@@ -40,53 +34,49 @@ moon.init()
 The simplest way to use moon time is to add an event listener, and once fired, update the time on your clock.
 
 ```js
-window.addEventListener("moontime:updated", function(e) {
-    document.querySelector(".clock").innerHTML = moon.formatMoonString("Time: %MS:%MM:%M %MdT %MeMT, %MAT, %MC")
+window.addEventListener('moontime:updated', function() {
+    document.querySelector('.clock').innerHTML = moon.formatMoonString('Time: %MSP:%MMP:%MP %MdT %MeMT, %MAT, %MC')
 })
 ```
 
-This function also makes use of the formatMoonString function, which formats a time string and adds the times. It uses the current time by default, so is perfect for this application.
+This function makes use of the `formatMoonString` function, which replaces `%`-prefixed codes with moon time values. It uses the current time by default.
 
 ## Syncing
 
-Moontime automatically syncs to Moon APIs. The time is initially calculated locally, based on the computer's time. Once a time is fetched from the API, the clock will slightly speed up or slow down until it matches. This feature can be modified (see Settings).
+Moontime automatically syncs to the Moon API. The time is initially calculated locally, based on the computer's time. Once a time is fetched from the API, the clock will slightly speed up or slow down until it matches. This is called 'smooth time', and can be adjusted in the settings.
 
-The offset between the time given and the API time is updated twice per second, and can also be monitored with an event listener like so.
-
-```js
-window.addEventListener("moontime:offset_updated", function(e) {
-    // the offset is measured in micro moon moments (about 5 milliseconds), and can be retrieved in e.detail
-    document.querySelector(".offset").innerHTML = "Offset: " + e.detail
-})
-
-// alternatively, you can manually fetch the sync offset yourself
-document.querySelector(".offset").innerHTML = "Offset: " + moon._smoothOffset
-```
-
-If the user's internet isn't connected or the API is not working, syncing will not work and the clock will remain on local time. You can be alerted when the status of the api connection changes, using an event listener.
+The offset between the time given and the API time is updated twice per second, and can also be monitored with an event listener like so:
 
 ```js
-window.addEventListener("moontime:api_status_updated", function(e) {
-    if (e.detail) {
-        // sync is working
-    } else {
-        // sync is not working
-    }
+window.addEventListener('moontime:offset_updated', function(e) {
+    // The offset is measured in micro moon moments to 3dp
+    document.querySelector('.offset').innerHTML = 'Offset: ' + e.detail
 })
+
+// Alternatively, you can manually fetch the sync offset yourself
+document.querySelector('.offset').innerHTML = 'Offset: ' + moon._time._latestSmoothOffset
 ```
 
+If the user's internet isn't connected or the API isn't working, the clock will remain on local time. You can be alerted when the status of the api connection changes, using an event listener.
+
+```js
+window.addEventListener('moontime:api_status_updated', function(e) {
+    // This will fire for every attempted API request
+    console.log('API connected:', e.detail.connected)
+})
+```
 
 ## Settings
 
 The settings object is accessible at `moon.settings`. Any value can be changed at any time.
 
-Setting | Default | Description
-------- | ------- | -----------
-smooth_sync | true | Determines if smooth syncing should be used (see Syncing). If not, the time will occasionally jump to update when the API time is fetched.
-smooth_factor | 10 | The factor of smooth syncing. Smaller factors sync faster, but will change the speed of the clock more. The recommended range is between 50 and 10.
-jump_large_diffs | true | Determines if large sync offsets ( > 5 seconds) should be jumped. Very large offsets will make the clock change at an unnaturally fast speed.
-log_api_errors | true | Determines if errors in fetching from the API should be logged in the console.
-fetchinterval | 5000 | How often moontime should fetch from the API in milliseconds.
+| Setting              | Default | Description                                                                                                                         |
+| -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| smooth               | true    | On/off toggle for the 'smooth time' between local and API time                                                                      |
+| smoothFactor         | 10      | The speed of smooth syncing. Smaller values sync faster, but will change the speed of the clock more. Recommended between 50 and 10 |
+| smoothJumpLargeDiffs | true    | Determines if large sync offsets (> 5 seconds) should be jumped, instead of making the clock change unnaturally fast                |
+| logAPIErrors         | false   | Controls if API request errors will be logged in the console                                                                        |
+| fetchInterval        | 5000    | How frequently the API sync should be requested (in milliseconds)                                                                   |
 
 
 ## Format Strings
@@ -94,77 +84,73 @@ fetchinterval | 5000 | How often moontime should fetch from the API in milliseco
 The `formatMoonString()` function allows you to parse a string with keys that are swapped out with time values.
 
 ```js
-moon.formatMoonString("Time: %MS:%MM:%M %MdT %MeMT, %MAT, %MC")
-// will return something along the lines of:
+moon.formatMoonString('Time: %MSP:%MMP:%MP %MdT %MeMT, %MAT, %MC')
+// Will return something along the lines of:
 // 04:10:45 10th Nathaniel, McDonough, 11
 ```
 
-Key | Description
---- | -----------
-%m | Micro Moon Moments
-%M | Mini Moon Moments
-%MM | Moon Moments
-%MS | Moon Segments
-%Md | Moon Days
-%MdT | Moon Days + Suffix (st, nd, rd)
-%MeM | Mega Moon Moments
-%MeMT | Mega Moon Moments (by name)
-%MA | Moon Annuals
-%MAT | Moon Annuals (by name)
-%MC | Moon Chunks
-
+| Key   | Description                    |
+| ----- | ------------------------------ |
+| %m    | Micro Moon Moments             |
+| %mP   | Micro Moon Moments, padded     |
+| %M    | Mini Moon Moments              |
+| %MP   | Mini Moon Moments, padded      |
+| %MM   | Moon Moments                   |
+| %MMP  | Moon Moments, padded           |
+| %MS   | Moon Segments                  |
+| %MSP  | Moon Segments, padded          |
+| %Md   | Moon Days                      |
+| %MdP  | Moon Days, padded              |
+| %MdT  | Moon Days, suffixed (-st, -nd) |
+| %MeM  | Mega Moon Moment               |
+| %MeMT | Mega Moon Moment, by name      |
+| %MA   | Moon Annual                    |
+| %MAT  | Moon Annual, by name           |
+| %MC   | Moon Chunk                     |
 
 ## Functions
-### solarToMoon(millis)
 
-- millis: time in milliseconds, counting from midnight of Jan 1st, 1970.
+### solarToMoon(milliseconds: number)
 
-Converts a time from Solar to Moon. The milliseconds parsed can be calculated with `Date.getTime()`.
+- milliseconds: unix time in milliseconds
 
-### moonToSolar(micro_moments)
+Converts a time from solar to moon.
 
-- micro_moments: time in micro moon moments.
+### moonToSolar(micromoments: number)
 
-Converts a time from Moon to Solar.
+- micromoments: moon time in micro moon moments
 
-### currentExactTime()
+Converts a time from moon to solar.
 
-Returns the current moon time according to the Moon API.
+### now()
 
-### currentLocalTime()
+Returns the current moon time. Will return local or smooth time depending on the 'smooth' setting.
+
+### local()
 
 Returns the current moon time according to the local computer clock.
 
-### currentSmoothTime()
+### smooth()
 
-Returns the current smooth moon time. Smooth moon time is used to transition from the initial local time and sync up to the API time without the clock jumping back or forwards.
+Returns the current smooth moon time.
 
-### currentTime()
+### api()
 
-Returns the current moon time. Will return exact or smooth time depending on the 'smooth_sync' setting. You should only really need to use this function when fetching the time.
+Returns the current moon time according to the Moon API.
 
-### formatMoonTime(micro_moments)
+### formatMoonTime(micromoments?: number)
 
-- micro_moments: time in micro moon moments to format. **defaults to current time**
+- micromoments: moon time in micro moon moments, defaults to current time
 
-Formats the moon time provided and returns an object with all the keys in the table under 'Format Strings'.
+Formats the moon time provided. Returns an object with all the keys in the table under [Format Strings](#format-strings) and their corresponding values.
 
-### formatMoonString(format_string, micro moments)
+### formatMoonString(string: string, time?: number)
 
-- format_string: the string in which to look for keys to replace with times, and then return.
-- micro_moments: time in micro moon moments to insert into string. **defaults to current time**
+- string: the string to format
+- time: moon time in micro moon moments, defaults to current time
 
-Reformats the provided string, replacing all keys with certain values based on the current moon time. See 'Format Strings'.
+Reformats the provided string, replacing all the keys with the corresponding moon time values based on the provided time. See [Format Strings](#format-strings).
 
 ### init()
 
 Used to initialize the moontime library, if the `delay_start` attribute is provided on the script tag to stop automatic initializing.
-
-
-## Examples
-example.html demonstrates a simple set up of moon time.
-
-
-## Contributing
-You want to contribute? Ok cool, go for it.
-

@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "alwaysStrict": true,
+
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "outDir": "build",
+
+    "sourceMap": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "declaration": true,
+
+    "esModuleInterop": true,
+    "allowUnreachableCode": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["./moontime.ts"],
+}

@@ -3,20 +3,20 @@
 
 <head>
     <title>Moon Library Example</title>
-    <script src="./moontime.js"></script>
+    <script src='./build/moontime.js'></script>
 </head>
 
 <body>
-    <p class="clock"></p>
-    <p class="offset"></p>
+    <p class='clock'></p>
+    <p class='offset'></p>
 
     <script>
-        window.addEventListener("moontime:updated", function(e) {
-            document.querySelector(".clock").innerHTML = moon.formatMoonString("Time: %MS:%MM:%M %MdT %MeMT, %MAT, %MC")
+        window.addEventListener('moontime:updated', function(e) {
+            document.querySelector('.clock').innerHTML = moon.formatMoonString('Time: %MSP:%MMP:%MP %MdT %MeMT, %MAT, %MC')
         })
 
-        window.addEventListener("moontime:offset_updated", function(e) {
-            document.querySelector(".offset").innerHTML = "Offset: " + e.detail
+        window.addEventListener('moontime:offset_updated', function(e) {
+            document.querySelector('.offset').innerHTML = 'Offset: ' + e.detail
         })
     </script>
 </body>

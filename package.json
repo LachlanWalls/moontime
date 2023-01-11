@@ -1,0 +1,17 @@
+{
+  "name": "moontime",
+  "version": "1.0.0",
+  "description": "Interface with a timekeeping system based on the lunar cycle",
+  "main": "./build/moontime.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lachlan-Walls/moontime.git"
+  },
+  "author": "Lachlan Walls",
+  "license": "BSD-3-Clause",
+  "types": "./build/moontime.d.ts",
+  "bugs": {
+    "url": "https://github.com/Lachlan-Walls/moontime/issues"
+  },
+  "homepage": "https://github.com/Lachlan-Walls/moontime#readme"
+}
