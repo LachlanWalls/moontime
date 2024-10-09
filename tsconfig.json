@@ -3,9 +3,10 @@
     "strict": true,
     "alwaysStrict": true,
 
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
-    "outDir": "build",
+    "target": "ES2015",
+    "module": "ES2015",
+    "lib": ["ESNext", "DOM"],
+    "outDir": "./build",
 
     "sourceMap": true,
     "incremental": true,

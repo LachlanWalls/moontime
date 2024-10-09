@@ -1,54 +1,85 @@
-"use strict";
-const moon = {
-    const: {
-        EPOCH: 413596800000,
-        MICRO_MOMENT_LEN: 4.917875,
-        MINI_MOMENT_LEN: 4.917875 * 200,
-        API_ENDPOINT: 'https://api.dynodel.com/moon'
-    },
-    settings: {
-        smooth: true,
-        smoothFactor: 10,
-        smoothJumpLargeDiffs: true,
-        logAPIErrors: false,
-        fetchInterval: 5000
-    },
-    _time: {
-        _initialLocal: -1,
-        _initialMoon: -1,
-        _latestAPI: -1,
-        _latestAPIUpdate: -1,
-        _latestSmooth: -1,
-        _latestSmoothUpdate: -1,
-        _latestSmoothOffset: -1,
-        _latestSmoothOffsetUpdate: -1
-    },
-    now: function (t) { return this.settings.smooth ? this.smooth(t) : this.api(t) || this.local(t); },
-    local: function (t = performance.now()) { return this._time._initialMoon + (t - this._time._initialLocal) / this.const.MICRO_MOMENT_LEN; },
-    smooth: function (t = performance.now()) { return this._time._latestSmooth + (t - this._time._latestSmoothUpdate) / this.const.MICRO_MOMENT_LEN; },
-    api: function (t = performance.now()) { return this._time._latestAPI === -1 ? undefined : this._time._latestAPI + (t - this._time._latestAPIUpdate) / this.const.MICRO_MOMENT_LEN; },
-    init: function (mode = 'manual') {
-        const scripts = document.querySelectorAll('script');
-        const script = Array.from(scripts).find(s => s.src.indexOf('moontime.js') > -1 && s.getAttribute('delay_start') !== null);
-        if (script && mode === 'auto')
-            return false;
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+export class Moon extends EventTarget {
+    constructor(settings = {}) {
+        super();
+        this.settings = {
+            smooth: true,
+            smoothFactor: 10,
+            smoothJumpLargeDiffs: true,
+            logAPIErrors: false,
+            fetchInterval: 5000
+        };
+        this._time = {
+            _initialLocal: -1,
+            _initialMoon: -1,
+            _latestAPI: -1,
+            _latestAPIUpdate: -1,
+            _latestSmooth: -1,
+            _latestSmoothUpdate: -1,
+            _latestSmoothOffset: -1,
+            _latestSmoothOffsetUpdate: -1
+        };
+        this.settings = Object.assign(this.settings, settings);
         this._time._initialLocal = performance.now();
-        this._time._initialMoon = (Date.now() - this.const.EPOCH) / this.const.MICRO_MOMENT_LEN;
+        this._time._initialMoon = this.solarToMoon(Date.now());
         this._time._latestSmoothUpdate = performance.now();
         this._time._latestSmooth = this.local(this._time._latestSmoothUpdate);
-        window.setTimeout(this._updateSmooth.bind(this), this.const.MINI_MOMENT_LEN);
-        window.setInterval(() => {
+        setTimeout(this._updateSmooth.bind(this), Moon.MICRO_MOMENT_LEN * 200);
+        setInterval(() => {
             const t = performance.now(), api = this.api(t);
             const offset = api ? api - this.smooth(t) : undefined;
             if (offset) {
                 this._time._latestSmoothOffset = offset;
                 this._time._latestSmoothOffsetUpdate = t;
-                window.dispatchEvent(new CustomEvent('moontime:offset_updated', { detail: Math.round(offset * 1000) / 1000 }));
+                this.dispatchEvent(new MoonOffsetUpdateEvent(Math.round(offset * 1000) / 1000));
             }
         }, 500);
-        moon._fetchAPI();
-    },
-    _updateSmooth: function () {
+        this._fetchAPI();
+    }
+    /**
+     * Calculates the current moon time, using the 'smooth' time if smooth time is enabled or the 'API' time, falling back to the 'local' time.
+     * @returns current moon time in micro moon moments.
+     */
+    now() { return this.settings.smooth ? this.smooth() : (this.api() || this.local()); }
+    /**
+     * Calculates a 'local' moon time based on the current device's clock.
+     * @param t local process time to calculate the time for, defaults to the current time.
+     * @returns 'local' moon time in micro moon moments.
+     */
+    local(t = performance.now()) { return this._time._initialMoon + (t - this._time._initialLocal) / Moon.MICRO_MOMENT_LEN; }
+    /**
+     * Calculates a 'smooth' moon time based on a smooth transition from the 'local' moon time to the latest 'API' moon time.
+     * @param t local process time to calculate the time for, defaults to the current time.
+     * @returns 'smooth' moon time in micro moon moments.
+     */
+    smooth(t = performance.now()) { return this._time._latestSmooth + (t - this._time._latestSmoothUpdate) / Moon.MICRO_MOMENT_LEN; }
+    /**
+     * Calculates an 'API' moon time based on the latest Moon API request data.
+     * @param t local process time to calculate the time for, defaults to the current time.
+     * @returns 'API' moon time in micro moon moments, or null if unavailable.
+     */
+    api(t = performance.now()) { return this._time._latestAPI === -1 ? null : this._time._latestAPI + (t - this._time._latestAPIUpdate) / Moon.MICRO_MOMENT_LEN; }
+    /**
+     * Convert a solar time to the equivalent moon time.
+     * @param milliseconds solar time in unix milliseconds.
+     * @returns moon time in micro moon moments.
+     */
+    solarToMoon(milliseconds) { return (milliseconds - Moon.EPOCH) / Moon.MICRO_MOMENT_LEN; }
+    /**
+     * Converts a moon time to the equivalent solar time.
+     * @param micromoments moon time in micro moon moments.
+     * @returns solar time in unix milliseconds.
+     */
+    moonToSolar(micromoments) { return micromoments * Moon.MICRO_MOMENT_LEN + Moon.EPOCH; }
+    _updateSmooth() {
         const start = performance.now();
         if (this._time._latestAPI !== -1) {
             const offset = this.api() - this.smooth(), prevSmoothUpdate = this._time._latestSmoothUpdate;
@@ -56,35 +87,46 @@ const moon = {
             if (offset > 1000 && this.settings.smoothJumpLargeDiffs)
                 this._time._latestSmooth = this.api(this._time._latestSmoothUpdate);
             else
-                this._time._latestSmooth = this._time._latestSmooth + (this._time._latestSmoothUpdate - prevSmoothUpdate) / this.const.MICRO_MOMENT_LEN + offset / this.settings.smoothFactor;
+                this._time._latestSmooth = this._time._latestSmooth + (this._time._latestSmoothUpdate - prevSmoothUpdate) / Moon.MICRO_MOMENT_LEN + offset / this.settings.smoothFactor;
         }
         else {
             this._time._latestSmoothUpdate = performance.now();
             this._time._latestSmooth = this.local(this._time._latestSmoothUpdate);
         }
-        window.setTimeout(this._updateSmooth.bind(this), this.const.MINI_MOMENT_LEN - (performance.now() - start) - 10);
-        window.dispatchEvent(new CustomEvent('moontime:updated', { detail: this.now() }));
-    },
-    _fetchAPI: async function () {
-        try {
-            const res = await fetch(this.const.API_ENDPOINT).then(res => res.text());
-            const [time, relativeMoon] = res.split(':').map(Number);
-            if (time === undefined || isNaN(time) || relativeMoon === undefined || isNaN(relativeMoon))
-                throw new Error('Invalid response: ' + res);
-            this._time._latestAPI = relativeMoon - (Date.now() - time) / this.const.MICRO_MOMENT_LEN;
-            this._time._latestAPIUpdate = performance.now();
-            window.dispatchEvent(new CustomEvent('moontime:api_status_update', { detail: { connected: true } }));
-        }
-        catch (e) {
-            this._time._latestAPI = -1;
-            if (this.settings.logAPIErrors)
-                console.error(e);
-            window.dispatchEvent(new CustomEvent('moontime:api_status_update', { detail: { connected: false } }));
-        }
-        window.setTimeout(this._fetchAPI.bind(this), this.settings.fetchInterval);
-    },
-    formatMoonTime: function (moon) {
-        let microMoonMoments = moon || this.now();
+        setTimeout(this._updateSmooth.bind(this), Moon.MICRO_MOMENT_LEN * 200 - (performance.now() - start) - 10);
+        this.dispatchEvent(new MoonUpdateEvent(this.now()));
+    }
+    _fetchAPI() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.settings.smooth) {
+                try {
+                    const send = performance.now();
+                    const res = yield fetch(Moon.API_ENDPOINT).then(res => res.json());
+                    const receive = performance.now();
+                    const duration = (receive - send) / Moon.MICRO_MOMENT_LEN;
+                    if (res.local_m === undefined || isNaN(res.local_m) || res.exec_m === undefined || isNaN(res.exec_m))
+                        throw new Error('Invalid response: ' + res);
+                    this._time._latestAPI = res.local_m + (duration - res.exec_m) / 2;
+                    this._time._latestAPIUpdate = receive;
+                    this.dispatchEvent(new MoonAPIStatusUpdateEvent(true));
+                }
+                catch (e) {
+                    this._time._latestAPI = -1;
+                    if (this.settings.logAPIErrors)
+                        console.error(e);
+                    this.dispatchEvent(new MoonAPIStatusUpdateEvent(false));
+                }
+            }
+            setTimeout(this._fetchAPI.bind(this), this.settings.fetchInterval);
+        });
+    }
+    /**
+     * Formats the given moon time by breaking it down into the various time components and presenting them in useful ways.
+     * @param micromoments moon time in micro moon moments, defaults to `moon.now()`.
+     * @returns an object with all of the moon time units in varying formats.
+     */
+    formatMoonTime(micromoments) {
+        let microMoonMoments = micromoments || this.now();
         let miniMoonMoments = Math.floor(microMoonMoments / 200);
         microMoonMoments = microMoonMoments - miniMoonMoments * 200;
         let moonMoments = Math.floor(miniMoonMoments / 100);
@@ -121,29 +163,58 @@ const moon = {
             moonAnnualByName,
             moonChunk
         };
-    },
-    formatMoonString: function (string, time) {
-        const formatted = this.formatMoonTime(time);
-        const formats = [
-            ['microMoonMoments', 'm'],
-            ['microMoonMomentsPadded', 'mP'],
-            ['miniMoonMoments', 'M'],
-            ['miniMoonMomentsPadded', 'MP'],
-            ['moonMoments', 'MM'],
-            ['moonMomentsPadded', 'MMP'],
-            ['moonSegments', 'MS'],
-            ['moonSegmentsPadded', 'MSP'],
-            ['moonDays', 'Md'],
-            ['moonDaysPadded', 'MdP'],
-            ['moonDaysWithSuffix', 'MdT'],
-            ['megaMoonMoment', 'MeM'],
-            ['megaMoonMomentByName', 'MeMT'],
-            ['moonAnnual', 'MA'],
-            ['moonAnnualByName', 'MAT'],
-            ['moonChunk', 'MC']
-        ];
-        return formats.reduceRight((s, [k, v]) => s.split(`%${v}`).join(String(formatted[k])), string);
     }
-};
-moon.init('auto');
+    /**
+     * Formats the given moon time by inserting the respective components into the given format string. Refer to the README or `Moon.FORMATS` for a reference of the available format keys.
+     * @param string string to parse, replacing format keys with the moon time components.
+     * @param micromoments moon time in micro moon moments, defaults to `moon.now()`.
+     * @returns parsed string.
+     */
+    formatMoonString(string, micromoments) {
+        const formatted = this.formatMoonTime(micromoments);
+        return Moon.FORMATS.reduceRight((s, [k, v]) => s.replaceAll(`%${v}`, String(formatted[k])), string);
+    }
+}
+Moon.EPOCH = 413596800000;
+Moon.MICRO_MOMENT_LEN = 4.917875;
+Moon.API_ENDPOINT = 'https://api.dynodel.com/moon/v2';
+Moon.FORMATS = [
+    ['microMoonMoments', 'm'],
+    ['microMoonMomentsPadded', 'mP'],
+    ['miniMoonMoments', 'M'],
+    ['miniMoonMomentsPadded', 'MP'],
+    ['moonMoments', 'MM'],
+    ['moonMomentsPadded', 'MMP'],
+    ['moonSegments', 'MS'],
+    ['moonSegmentsPadded', 'MSP'],
+    ['moonDays', 'Md'],
+    ['moonDaysPadded', 'MdP'],
+    ['moonDaysWithSuffix', 'MdT'],
+    ['megaMoonMoment', 'MeM'],
+    ['megaMoonMomentByName', 'MeMT'],
+    ['moonAnnual', 'MA'],
+    ['moonAnnualByName', 'MAT'],
+    ['moonChunk', 'MC']
+];
+/** Event to indicate that the moon time has updated, dispatched every mini moon moment. */
+export class MoonUpdateEvent extends Event {
+    constructor(time) {
+        super('update');
+        this.time = time;
+    }
+}
+/** Event to indicate that the moon time offset has updated, dispatched at the same frequency as main updates. */
+export class MoonOffsetUpdateEvent extends Event {
+    constructor(offset) {
+        super('offset_update');
+        this.offset = offset;
+    }
+}
+/** Event to indicate the status of API connectivity, dispatched after every attempted request. */
+export class MoonAPIStatusUpdateEvent extends Event {
+    constructor(connected) {
+        super('api_status_update');
+        this.connected = connected;
+    }
+}
 //# sourceMappingURL=moontime.js.map

@@ -3,20 +3,27 @@
 
 <head>
     <title>Moon Library Example</title>
-    <script src='./build/moontime.js'></script>
 </head>
 
 <body>
     <p class='clock'></p>
     <p class='offset'></p>
+    <p class='api'></p>
 
-    <script>
-        window.addEventListener('moontime:updated', function(e) {
+    <script type='module'>
+        import { Moon } from './build/moontime.js'
+        const moon = new Moon()
+
+        moon.addEventListener('update', function(e) {
             document.querySelector('.clock').innerHTML = moon.formatMoonString('Time: %MSP:%MMP:%MP %MdT %MeMT, %MAT, %MC')
         })
 
-        window.addEventListener('moontime:offset_updated', function(e) {
-            document.querySelector('.offset').innerHTML = 'Offset: ' + e.detail
+        moon.addEventListener('offset_update', function(e) {
+            document.querySelector('.offset').innerHTML = 'Offset: ' + e.offset
+        })
+
+        moon.addEventListener('api_status_update', function(e) {
+            document.querySelector('.api').innerHTML = 'API Connected: ' + String(e.connected)
         })
     </script>
 </body>

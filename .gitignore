@@ -1,2 +1,3 @@
 tsconfig.tsbuildinfo
 .npmrc
+node_modules
