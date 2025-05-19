@@ -154,3 +154,10 @@ Formats the given moon time by inserting the respective components into the give
 - string: string to parse, replacing format keys with the moon time components.
 - micromoments: moon time in micro moon moments, defaults to `moon.now()`.
 - *returns*: parsed string.
+
+### clock(format: string, callback: (string: string, time: number) => void): { now: () => string, dispose: () => void }
+
+Creates a 'clock', which updates at a particular interval based on the given format string.
+- format: string to format by.
+- callback: function to call whenever the time given by the format string changes.
+- *returns*: an object to dispose the clock if necessary.

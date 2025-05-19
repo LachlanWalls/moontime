@@ -18,6 +18,13 @@
             document.querySelector('.clock').innerHTML = moon.formatMoonString('Time: %MSP:%MMP:%MP %MdT %MeMT, %MAT, %MC')
         })
 
+        /*
+            alternatively...
+            moon.clock('Time: %MSP:%MMP:%MP %MdT %MeMT, %MAT, %MC', (_, time) => {
+                document.querySelector('.clock').innerHTML = time
+            })
+        */
+
         moon.addEventListener('offset_update', function(e) {
             document.querySelector('.offset').innerHTML = 'Offset: ' + e.offset
         })

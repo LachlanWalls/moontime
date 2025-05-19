@@ -216,6 +216,43 @@ export class Moon extends EventTarget {
     const formatted = this.formatMoonTime(micromoments)
     return Moon.FORMATS.reduceRight((s, [k, v]) => s.replaceAll(`%${v}`, String(formatted[k])), string)
   }
+
+  /**
+   * Creates a 'clock', which updates at a particular interval based on the given format string.
+   * @param format string to format by.
+   * @param callback function to call whenever the time given by the format string changes.
+   * @returns an object to dispose the clock if necessary.
+   */
+  clock (format: string, callback: (string: string, time: number) => void) {
+    const ref = { latestFormatted: this.formatMoonString(format) }
+    const onUpdate = (event: MoonUpdateEvent) => {
+      const formatted = this.formatMoonString(format, event.time)
+      if (formatted !== ref.latestFormatted) {
+        ref.latestFormatted = formatted
+        callback(formatted, event.time)
+      }
+    }
+
+    this.addEventListener('update', onUpdate)
+    return {
+      now: () => ref.latestFormatted,
+      dispose: () => this.removeEventListener('update', onUpdate as EventListener)
+    }
+  }
+
+  /**
+   * Proxy of the native setTimeout, but accepts a timeout in micro moon moments instead of milliseconds.
+   */
+  static setTimeout (handler: TimerHandler, timeout: number) {
+    return setTimeout(handler, timeout * Moon.MICRO_MOMENT_LEN)
+  }
+
+  /**
+   * Proxy of the native setInterval, but accepts an interval in micro moon moments instead of milliseconds.
+   */
+  static setInterval (handler: TimerHandler, timeout: number) {
+    return setInterval(handler, timeout * Moon.MICRO_MOMENT_LEN)
+  }
 }
 
 /** Event to indicate that the moon time has updated, dispatched every mini moon moment. */

@@ -85,6 +85,23 @@ export declare class Moon extends EventTarget {
      * @returns parsed string.
      */
     formatMoonString(string: string, micromoments?: number): string;
+    /**
+     * Creates a 'clock', which updates at a given interval based on a given format string.
+     * @param format string to format by.
+     * @param callback function to call whenever the current time by the given format string changes.
+     */
+    clock(format: string, callback: (string: string, time: number) => void): {
+        now: () => string;
+        dispose: () => void;
+    };
+    /**
+     * Proxy of the native setTimeout, but accepts a timeout in micro moon moments instead of milliseconds.
+     */
+    static setTimeout(handler: TimerHandler, timeout: number): number;
+    /**
+     * Proxy of the native setInterval, but accepts an interval in micro moon moments instead of milliseconds.
+     */
+    static setInterval(handler: TimerHandler, timeout: number): number;
 }
 /** Event to indicate that the moon time has updated, dispatched every mini moon moment. */
 export declare class MoonUpdateEvent extends Event {

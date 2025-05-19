@@ -174,6 +174,38 @@ export class Moon extends EventTarget {
         const formatted = this.formatMoonTime(micromoments);
         return Moon.FORMATS.reduceRight((s, [k, v]) => s.replaceAll(`%${v}`, String(formatted[k])), string);
     }
+    /**
+     * Creates a 'clock', which updates at a given interval based on a given format string.
+     * @param format string to format by.
+     * @param callback function to call whenever the current time by the given format string changes.
+     */
+    clock(format, callback) {
+        const ref = { latestFormatted: this.formatMoonString(format) };
+        const onUpdate = (event) => {
+            const formatted = this.formatMoonString(format, event.time);
+            if (formatted !== ref.latestFormatted) {
+                ref.latestFormatted = formatted;
+                callback(formatted, event.time);
+            }
+        };
+        this.addEventListener('update', onUpdate);
+        return {
+            now: () => ref.latestFormatted,
+            dispose: () => this.removeEventListener('update', onUpdate)
+        };
+    }
+    /**
+     * Proxy of the native setTimeout, but accepts a timeout in micro moon moments instead of milliseconds.
+     */
+    static setTimeout(handler, timeout) {
+        return setTimeout(handler, timeout * Moon.MICRO_MOMENT_LEN);
+    }
+    /**
+     * Proxy of the native setInterval, but accepts an interval in micro moon moments instead of milliseconds.
+     */
+    static setInterval(handler, timeout) {
+        return setInterval(handler, timeout * Moon.MICRO_MOMENT_LEN);
+    }
 }
 Moon.EPOCH = 413596800000;
 Moon.MICRO_MOMENT_LEN = 4.917875;
